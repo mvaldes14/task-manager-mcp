@@ -1,0 +1,153 @@
+{
+  "lockfile_version": "1",
+  "packages": {
+    "github:NixOS/nixpkgs/nixpkgs-unstable": {
+      "last_modified": "2026-04-16T08:46:55Z",
+      "resolved": "github:NixOS/nixpkgs/b86751bc4085f48661017fa226dee99fab6c651b?lastModified=1776329215&narHash=sha256-a8BYi3mzoJ%2FAcJP8UldOx8emoPRLeWqALZWu4ZvjPXw%3D"
+    },
+    "go@latest": {
+      "last_modified": "2026-04-16T08:46:55Z",
+      "resolved": "github:NixOS/nixpkgs/b86751bc4085f48661017fa226dee99fab6c651b#go",
+      "source": "devbox-search",
+      "version": "1.26.1",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/kh43nhaz1qcpwws2xq805lrmwpmn9i3k-go-1.26.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/kh43nhaz1qcpwws2xq805lrmwpmn9i3k-go-1.26.1"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/rz1pqbm5z3zfby250i0djfmfzzj7khg9-go-1.26.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/rz1pqbm5z3zfby250i0djfmfzzj7khg9-go-1.26.1"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/yv6jj27racylbfjw6a1cdr91ndxbgyf6-go-1.26.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/yv6jj27racylbfjw6a1cdr91ndxbgyf6-go-1.26.1"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/ckcq2mj8zk0drhaaacy6mp9d924hnr4m-go-1.26.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/ckcq2mj8zk0drhaaacy6mp9d924hnr4m-go-1.26.1"
+        }
+      }
+    },
+    "gopls@latest": {
+      "last_modified": "2026-04-16T08:46:55Z",
+      "resolved": "github:NixOS/nixpkgs/b86751bc4085f48661017fa226dee99fab6c651b#gopls",
+      "source": "devbox-search",
+      "version": "0.21.1",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/5jmh0ngjcid1ppagdd4wb27c4jnl6bys-gopls-0.21.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/5jmh0ngjcid1ppagdd4wb27c4jnl6bys-gopls-0.21.1"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/900kp33j0d58xdqhl7bmjbn6vmf2qzp3-gopls-0.21.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/900kp33j0d58xdqhl7bmjbn6vmf2qzp3-gopls-0.21.1"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/9k2dbpw4357xb1k5nsp3hyjgzyrkqgww-gopls-0.21.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/9k2dbpw4357xb1k5nsp3hyjgzyrkqgww-gopls-0.21.1"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/27gfim2iij5ydh7r750q2ja5ljpv5ihl-gopls-0.21.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/27gfim2iij5ydh7r750q2ja5ljpv5ihl-gopls-0.21.1"
+        }
+      }
+    },
+    "gotools@latest": {
+      "last_modified": "2026-04-16T08:46:55Z",
+      "resolved": "github:NixOS/nixpkgs/b86751bc4085f48661017fa226dee99fab6c651b#gotools",
+      "source": "devbox-search",
+      "version": "0.44.0",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/nlj0829rrklpg0663pspi32bgvg53jmw-gotools-0.44.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/nlj0829rrklpg0663pspi32bgvg53jmw-gotools-0.44.0"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/igbbm6cj4m7ydbvmgb58w2m61agvbcrb-gotools-0.44.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/igbbm6cj4m7ydbvmgb58w2m61agvbcrb-gotools-0.44.0"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/m3xj897v0y6blywic5amwki28i52yxls-gotools-0.44.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/m3xj897v0y6blywic5amwki28i52yxls-gotools-0.44.0"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/pzlp7h1f9kx44fv458xrbj7faxav0kvq-gotools-0.44.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/pzlp7h1f9kx44fv458xrbj7faxav0kvq-gotools-0.44.0"
+        }
+      }
+    }
+  }
+}
