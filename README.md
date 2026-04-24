@@ -21,6 +21,16 @@ go build -o task-manager-mcp .
 |---|---|---|
 | `DOIT_BASE_URL` | _(required)_ | Base URL of your doit instance (e.g. `http://localhost:5001`) |
 | `DOIT_API_KEY` | _(required)_ | Bearer token (`TD_API_KEY` from doit's `.env`) |
+| `MCP_ADDR` | `:8080` | Address the HTTP server binds to |
+
+## Transport
+
+The server uses the [MCP streamable HTTP transport](https://modelcontextprotocol.io/docs/concepts/transports) — plain HTTP POST, no SSE keepalive. The endpoint is `POST /mcp`.
+
+```bash
+DOIT_BASE_URL=http://localhost:5001 DOIT_API_KEY=<key> ./task-manager-mcp
+# listening on :8080/mcp
+```
 
 ## Claude Code setup
 
@@ -30,7 +40,8 @@ Add to `~/.claude/settings.json` (or your project-level `.mcp.json`):
 {
   "mcpServers": {
     "doit": {
-      "command": "/path/to/task-manager-mcp",
+      "type": "http",
+      "url": "http://localhost:8080/mcp",
       "env": {
         "DOIT_BASE_URL": "http://localhost:5001",
         "DOIT_API_KEY": "your-key"
@@ -79,6 +90,13 @@ Then restart Claude Code — the tools appear automatically.
 |---|---|
 | `parse_nlp` | Parse natural language (`text` required) → returns structured task fields |
 
+### AI Results
+
+| Tool | Description |
+|---|---|
+| `get_task_ai_result` | Get the stored AI-generated result for a task (`task_id` required) |
+| `store_task_ai_result` | Store (upsert) an AI result for a task (`task_id` + `content` required; optional: `model`) |
+
 ## Project structure
 
 ```
@@ -86,10 +104,11 @@ Then restart Claude Code — the tools appear automatically.
 ├── main.go
 └── internal/
     ├── client/
-    │   └── client.go       # HTTP client with Get/Post/Patch/Delete
+    │   └── client.go       # HTTP client with Get/Post/Patch/Delete/Put
     └── tools/
         ├── tasks.go
         ├── projects.go
         ├── subtasks.go
-        └── nlp.go
+        ├── nlp.go
+        └── ai.go
 ```

@@ -80,6 +80,11 @@ func (c *Client) Patch(path string, body any) ([]byte, error) {
 	return c.do(http.MethodPatch, path, body)
 }
 
+// Put sends a PUT request to the given path with the given body and returns the response body.
+func (c *Client) Put(path string, body any) ([]byte, error) {
+	return c.do(http.MethodPut, path, body)
+}
+
 // Delete sends a DELETE request to the given path and returns the response body.
 func (c *Client) Delete(path string) ([]byte, error) {
 	return c.do(http.MethodDelete, path, nil)
