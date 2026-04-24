@@ -25,11 +25,6 @@ func main() {
 		addr = ":8080"
 	}
 
-	mcpURL := os.Getenv("MCP_BASE_URL")
-	if mcpURL == "" {
-		mcpURL = "http://localhost" + addr
-	}
-
 	c := client.New(baseURL, apiKey)
 
 	s := server.NewMCPServer("doit-mcp", "0.1.0")
@@ -39,9 +34,9 @@ func main() {
 	tools.RegisterNLPTools(s, c)
 	tools.RegisterSubtaskTools(s, c)
 
-	sse := server.NewSSEServer(s, server.WithBaseURL(mcpURL))
-	log.Printf("MCP SSE server listening on %s", addr)
-	if err := sse.Start(addr); err != nil {
+	h := server.NewStreamableHTTPServer(s)
+	log.Printf("MCP HTTP server listening on %s/mcp", addr)
+	if err := h.Start(addr); err != nil {
 		log.Fatalf("server error: %v", err)
 	}
 }
