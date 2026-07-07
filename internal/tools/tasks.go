@@ -86,6 +86,7 @@ func RegisterTaskTools(s *server.MCPServer, c *client.Client) {
 			mcp.WithString("project_id", mcp.Description("Project ID to assign the task to")),
 			mcp.WithArray("tags", mcp.Description("List of tags")),
 			mcp.WithString("recurrence", mcp.Description("Recurrence rule")),
+			mcp.WithArray("links", mcp.Description("List of links; each item an object with 'label' and 'url' keys")),
 		),
 		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			body := buildTaskBody(getArgs(req))
@@ -115,6 +116,7 @@ func RegisterTaskTools(s *server.MCPServer, c *client.Client) {
 			mcp.WithString("project_id", mcp.Description("Project ID")),
 			mcp.WithArray("tags", mcp.Description("List of tags")),
 			mcp.WithString("recurrence", mcp.Description("Recurrence rule")),
+			mcp.WithArray("links", mcp.Description("List of links; each item an object with 'label' and 'url' keys")),
 		),
 		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			all := getArgs(req)
@@ -188,7 +190,7 @@ func RegisterTaskTools(s *server.MCPServer, c *client.Client) {
 
 // buildTaskBody constructs a map for task create/update payloads from tool arguments.
 func buildTaskBody(args map[string]any) map[string]any {
-	fields := []string{"title", "description", "status", "due_date", "due_time", "project_id", "tags", "recurrence"}
+	fields := []string{"title", "description", "status", "due_date", "due_time", "project_id", "tags", "recurrence", "links"}
 	body := make(map[string]any, len(fields))
 	for _, f := range fields {
 		if v, ok := args[f]; ok && v != nil {
