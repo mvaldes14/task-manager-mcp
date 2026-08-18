@@ -61,11 +61,12 @@ Then restart Claude Code — the tools appear automatically.
 |---|---|
 | `list_tasks` | List tasks; optional filters: `project_id`, `status` (todo\|doing\|done), `search` |
 | `get_task` | Get a single task by `id` |
-| `create_task` | Create a task (`title` required; optional: `description`, `status`, `due_date`, `due_time`, `project_id`, `tags`, `recurrence`) |
+| `create_task` | Create a task (`title` required; optional: `description`, `status`, `priority` (low\|medium\|high), `due_date`, `due_time`, `project_id`, `tags`, `recurrence`, `recurrence_end`, `assigned_to`, `links`) |
 | `update_task` | Update any fields on a task by `id` |
 | `delete_task` | Delete a task by `id` |
 | `get_today_tasks` | Tasks due today |
 | `get_overdue_tasks` | Past-due tasks |
+| `get_upcoming_tasks` | Tasks due within the next 7 days |
 
 ### Projects
 
@@ -80,9 +81,17 @@ Then restart Claude Code — the tools appear automatically.
 
 | Tool | Description |
 |---|---|
-| `add_subtask` | Add a subtask to a task (`task_id` + `title` required) |
-| `update_subtask` | Update a subtask (`task_id`, `subtask_id` required; optional: `title`, `completed`) |
+| `add_subtask` | Add a subtask (`task_id` + `title` required; optional: `due_date`, `due_time`, `labels`, `linked_task_id`) |
+| `update_subtask` | Update a subtask (`task_id`, `subtask_id` required; optional: `title`, `completed`, `due_date`, `due_time`, `labels`) |
 | `delete_subtask` | Delete a subtask (`task_id`, `subtask_id` required) |
+
+### Context & discovery
+
+| Tool | Description |
+|---|---|
+| `get_agent_context` | One-shot snapshot: today, overdue, next 7 days, and projects in a single call |
+| `get_all_tags` | All distinct tags in use across tasks |
+| `get_dashboard_stats` | Productivity stats over a rolling window (optional `days`, default 30) |
 
 ### NLP
 

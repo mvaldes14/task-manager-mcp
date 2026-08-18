@@ -22,6 +22,7 @@ func RegisterTaskTools(s *server.MCPServer, c *client.Client) {
 				mcp.Enum("todo", "doing", "done"),
 			),
 			mcp.WithString("search", mcp.Description("Search query to filter tasks")),
+			mcp.WithReadOnlyHintAnnotation(true),
 		),
 		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			args := getArgs(req)
@@ -54,6 +55,7 @@ func RegisterTaskTools(s *server.MCPServer, c *client.Client) {
 				mcp.Description("Task ID"),
 				mcp.Required(),
 			),
+			mcp.WithReadOnlyHintAnnotation(true),
 		),
 		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			args := getArgs(req)
@@ -87,6 +89,12 @@ func RegisterTaskTools(s *server.MCPServer, c *client.Client) {
 			mcp.WithArray("tags", mcp.Description("List of tags")),
 			mcp.WithString("recurrence", mcp.Description("Recurrence rule")),
 			mcp.WithArray("links", mcp.Description("List of links; each item an object with 'label' and 'url' keys")),
+			mcp.WithString("priority",
+				mcp.Description("Task priority"),
+				mcp.Enum("low", "medium", "high"),
+			),
+			mcp.WithString("assigned_to", mcp.Description("User ID to assign the task to")),
+			mcp.WithString("recurrence_end", mcp.Description("Date to stop recurrence, YYYY-MM-DD")),
 		),
 		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			body := buildTaskBody(getArgs(req))
@@ -117,6 +125,12 @@ func RegisterTaskTools(s *server.MCPServer, c *client.Client) {
 			mcp.WithArray("tags", mcp.Description("List of tags")),
 			mcp.WithString("recurrence", mcp.Description("Recurrence rule")),
 			mcp.WithArray("links", mcp.Description("List of links; each item an object with 'label' and 'url' keys")),
+			mcp.WithString("priority",
+				mcp.Description("Task priority"),
+				mcp.Enum("low", "medium", "high"),
+			),
+			mcp.WithString("assigned_to", mcp.Description("User ID to assign the task to")),
+			mcp.WithString("recurrence_end", mcp.Description("Date to stop recurrence, YYYY-MM-DD")),
 		),
 		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			all := getArgs(req)
@@ -146,6 +160,7 @@ func RegisterTaskTools(s *server.MCPServer, c *client.Client) {
 				mcp.Description("Task ID"),
 				mcp.Required(),
 			),
+			mcp.WithDestructiveHintAnnotation(true),
 		),
 		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			args := getArgs(req)
@@ -164,6 +179,7 @@ func RegisterTaskTools(s *server.MCPServer, c *client.Client) {
 	s.AddTool(
 		mcp.NewTool("get_today_tasks",
 			mcp.WithDescription("Get all tasks due today"),
+			mcp.WithReadOnlyHintAnnotation(true),
 		),
 		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			data, err := c.Get("/api/tasks/today")
@@ -177,6 +193,7 @@ func RegisterTaskTools(s *server.MCPServer, c *client.Client) {
 	s.AddTool(
 		mcp.NewTool("get_overdue_tasks",
 			mcp.WithDescription("Get all overdue tasks"),
+			mcp.WithReadOnlyHintAnnotation(true),
 		),
 		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			data, err := c.Get("/api/tasks/overdue")
@@ -186,11 +203,25 @@ func RegisterTaskTools(s *server.MCPServer, c *client.Client) {
 			return mcp.NewToolResultText(prettyJSON(data)), nil
 		},
 	)
+
+	s.AddTool(
+		mcp.NewTool("get_upcoming_tasks",
+			mcp.WithDescription("Get tasks due within the next 7 days (excludes completed)"),
+			mcp.WithReadOnlyHintAnnotation(true),
+		),
+		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			data, err := c.Get("/api/tasks/upcoming")
+			if err != nil {
+				return nil, fmt.Errorf("get_upcoming_tasks: %w", err)
+			}
+			return mcp.NewToolResultText(prettyJSON(data)), nil
+		},
+	)
 }
 
 // buildTaskBody constructs a map for task create/update payloads from tool arguments.
 func buildTaskBody(args map[string]any) map[string]any {
-	fields := []string{"title", "description", "status", "due_date", "due_time", "project_id", "tags", "recurrence", "links"}
+	fields := []string{"title", "description", "status", "due_date", "due_time", "project_id", "tags", "recurrence", "recurrence_end", "links", "priority", "assigned_to"}
 	body := make(map[string]any, len(fields))
 	for _, f := range fields {
 		if v, ok := args[f]; ok && v != nil {
