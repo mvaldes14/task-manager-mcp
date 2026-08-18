@@ -22,6 +22,10 @@ func RegisterSubtaskTools(s *server.MCPServer, c *client.Client) {
 				mcp.Description("Subtask title"),
 				mcp.Required(),
 			),
+			mcp.WithString("due_date", mcp.Description("Due date in YYYY-MM-DD format")),
+			mcp.WithString("due_time", mcp.Description("Due time in HH:MM format")),
+			mcp.WithArray("labels", mcp.Description("List of labels")),
+			mcp.WithString("linked_task_id", mcp.Description("Link this subtask to an existing task; completing it marks that task done")),
 		),
 		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			args := getArgs(req)
@@ -34,6 +38,11 @@ func RegisterSubtaskTools(s *server.MCPServer, c *client.Client) {
 				return nil, fmt.Errorf("add_subtask: title is required")
 			}
 			body := map[string]any{"title": title}
+			for _, f := range []string{"due_date", "due_time", "labels", "linked_task_id"} {
+				if v, ok := args[f]; ok && v != nil {
+					body[f] = v
+				}
+			}
 			data, err := c.Post("/api/tasks/"+taskID+"/subtasks", body)
 			if err != nil {
 				return nil, fmt.Errorf("add_subtask: %w", err)
@@ -55,6 +64,9 @@ func RegisterSubtaskTools(s *server.MCPServer, c *client.Client) {
 			),
 			mcp.WithString("title", mcp.Description("New subtask title")),
 			mcp.WithBoolean("completed", mcp.Description("Mark the subtask as completed or not")),
+			mcp.WithString("due_date", mcp.Description("Due date in YYYY-MM-DD format")),
+			mcp.WithString("due_time", mcp.Description("Due time in HH:MM format")),
+			mcp.WithArray("labels", mcp.Description("List of labels")),
 		),
 		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			args := getArgs(req)
@@ -74,6 +86,15 @@ func RegisterSubtaskTools(s *server.MCPServer, c *client.Client) {
 			if v, ok := args["completed"].(bool); ok {
 				body["completed"] = v
 			}
+			if v, ok := args["due_date"].(string); ok && v != "" {
+				body["due_date"] = v
+			}
+			if v, ok := args["due_time"].(string); ok && v != "" {
+				body["due_time"] = v
+			}
+			if v, ok := args["labels"]; ok && v != nil {
+				body["labels"] = v
+			}
 
 			path := "/api/tasks/" + taskID + "/subtasks/" + subtaskID
 			data, err := c.Patch(path, body)
@@ -87,6 +108,7 @@ func RegisterSubtaskTools(s *server.MCPServer, c *client.Client) {
 	s.AddTool(
 		mcp.NewTool("delete_subtask",
 			mcp.WithDescription("Delete a subtask from a task"),
+			mcp.WithDestructiveHintAnnotation(true),
 			mcp.WithString("task_id",
 				mcp.Description("Parent task ID"),
 				mcp.Required(),

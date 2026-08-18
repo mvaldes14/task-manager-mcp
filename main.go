@@ -39,6 +39,7 @@ func main() {
 	tools.RegisterNLPTools(s, c)
 	tools.RegisterSubtaskTools(s, c)
 	tools.RegisterAITools(s, c)
+	tools.RegisterContextTools(s, c)
 
 	h := server.NewStreamableHTTPServer(s)
 

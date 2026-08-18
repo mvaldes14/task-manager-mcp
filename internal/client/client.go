@@ -59,7 +59,13 @@ func (c *Client) do(method, path string, body any) ([]byte, error) {
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("non-2xx response %d: %s", resp.StatusCode, string(respBody))
+		var apiErr struct {
+			Error string `json:"error"`
+		}
+		if json.Unmarshal(respBody, &apiErr) == nil && apiErr.Error != "" {
+			return nil, fmt.Errorf("api %d: %s", resp.StatusCode, apiErr.Error)
+		}
+		return nil, fmt.Errorf("api %d: %s", resp.StatusCode, string(respBody))
 	}
 
 	return respBody, nil
