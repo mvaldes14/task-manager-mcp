@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -26,6 +27,7 @@ func RegisterContextTools(s *server.MCPServer, c *client.Client) {
 				{"overdue", "/api/tasks/overdue"},
 				{"upcoming", "/api/tasks/upcoming"},
 				{"projects", "/api/projects"},
+				{"settings", "/api/settings"},
 			}
 			out := make(map[string]json.RawMessage, len(sections))
 			errs := make(map[string]string)
@@ -67,12 +69,21 @@ func RegisterContextTools(s *server.MCPServer, c *client.Client) {
 		mcp.NewTool("get_dashboard_stats",
 			mcp.WithDescription("Productivity stats over a rolling window: counts, completion trend, status breakdown, project progress, top tags, streaks"),
 			mcp.WithNumber("days", mcp.Description("Window size in days (e.g. 7, 30, 90); defaults to 30")),
+			mcp.WithString("today", mcp.Description("Client-supplied today date, YYYY-MM-DD, to avoid timezone issues")),
 			mcp.WithReadOnlyHintAnnotation(true),
 		),
 		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			path := "/api/dashboard/stats"
-			if v, ok := getArgs(req)["days"].(float64); ok {
-				path += fmt.Sprintf("?days=%d", int(v))
+			q := url.Values{}
+			args := getArgs(req)
+			if v, ok := args["days"].(float64); ok {
+				q.Set("days", fmt.Sprintf("%d", int(v)))
+			}
+			if v, ok := args["today"].(string); ok && v != "" {
+				q.Set("today", v)
+			}
+			if enc := q.Encode(); enc != "" {
+				path += "?" + enc
 			}
 			data, err := c.Get(path)
 			if err != nil {

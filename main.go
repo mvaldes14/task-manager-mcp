@@ -34,11 +34,16 @@ func main() {
 
 	s := server.NewMCPServer("doit-mcp", "0.1.0")
 
+	tools.RegisterAuthTools(s, c)
 	tools.RegisterTaskTools(s, c)
 	tools.RegisterProjectTools(s, c)
 	tools.RegisterNLPTools(s, c)
 	tools.RegisterSubtaskTools(s, c)
 	tools.RegisterAITools(s, c)
+	tools.RegisterUserTools(s, c)
+	tools.RegisterSettingsTools(s, c)
+	tools.RegisterCalendarTools(s, c)
+	tools.RegisterOTLPTools(s, c)
 	tools.RegisterContextTools(s, c)
 
 	h := server.NewStreamableHTTPServer(s)
