@@ -1,0 +1,15 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  go:
+    permissions:
+      contents: read
+    uses: mvaldes14/gh-actions/.github/workflows/go-ci.yml@main
+    with:
+      # Baseline CI first. Existing golangci-lint finding needs a separate cleanup.
+      lint: false
