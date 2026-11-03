@@ -19,8 +19,8 @@ func RegisterTaskTools(s *server.MCPServer, c *client.Client) {
 		mcp.NewTool("list_tasks",
 			mcp.WithDescription("List tasks, optionally filtered. Task search matches title/description and task keys like DO-123 or 123."),
 			mcp.WithString("project_id", mcp.Description("Filter by project ID; includes subprojects")),
-			mcp.WithString("status", mcp.Description("Comma-separated statuses; matches any"), mcp.Enum("todo", "doing", "blocked", "done")),
-			mcp.WithString("priority", mcp.Description("Comma-separated priorities; matches any"), mcp.Enum("low", "medium", "high")),
+			mcp.WithString("status", mcp.Description("Comma-separated statuses (todo, doing, blocked, done); matches any")),
+			mcp.WithString("priority", mcp.Description("Comma-separated priorities (low, medium, high); matches any")),
 			mcp.WithString("tag", mcp.Description("Comma-separated tags; task must have all tags")),
 			mcp.WithString("assigned_to", mcp.Description("User id, me, or none")),
 			mcp.WithString("due_after", mcp.Description("Inclusive lower due date bound, YYYY-MM-DD")),
@@ -54,7 +54,7 @@ func RegisterTaskTools(s *server.MCPServer, c *client.Client) {
 
 	s.AddTool(
 		mcp.NewTool("search_tasks",
-			mcp.WithDescription("Type-ahead search for open tasks, max 8 results"),
+			mcp.WithDescription("Type-ahead search for open tasks, max 8 results. Results include UUID and permanent numeric seq for formatting task keys."),
 			mcp.WithString("q", mcp.Description("Search text, at least 2 chars"), mcp.Required()),
 			mcp.WithString("exclude", mcp.Description("Task ID to exclude")),
 			mcp.WithReadOnlyHintAnnotation(true),
@@ -225,7 +225,7 @@ func RegisterTaskTools(s *server.MCPServer, c *client.Client) {
 
 	s.AddTool(
 		mcp.NewTool("bulk_update_tasks",
-			mcp.WithDescription("Apply project_id and/or status updates to up to 200 tasks"),
+			mcp.WithDescription("Apply project_id and/or status updates to up to 200 tasks. Bulk completion does not create recurrence clones."),
 			mcp.WithArray("ids", mcp.Description("Task ids/keys to update, 1-200"), mcp.Required()),
 			mcp.WithString("project_id", mcp.Description("Project ID to move tasks to")),
 			mcp.WithString("status", mcp.Description("Status to set"), mcp.Enum("todo", "doing", "blocked", "done")),

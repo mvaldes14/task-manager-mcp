@@ -67,7 +67,7 @@ func RegisterContextTools(s *server.MCPServer, c *client.Client) {
 
 	s.AddTool(
 		mcp.NewTool("get_dashboard_stats",
-			mcp.WithDescription("Productivity stats over a rolling window: counts, completion trend, status breakdown, project progress, top tags, streaks"),
+			mcp.WithDescription("Productivity stats over a rolling window: counts, completion trend, project progress, deadline at-risk projects, top tags, and streaks"),
 			mcp.WithNumber("days", mcp.Description("Window size in days (e.g. 7, 30, 90); defaults to 30")),
 			mcp.WithString("today", mcp.Description("Client-supplied today date, YYYY-MM-DD, to avoid timezone issues")),
 			mcp.WithReadOnlyHintAnnotation(true),
