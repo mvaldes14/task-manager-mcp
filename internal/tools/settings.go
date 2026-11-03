@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -41,30 +43,9 @@ func RegisterSettingsTools(s *server.MCPServer, c *client.Client) {
 			mcp.WithString("task_key_prefix", mcp.Description("Task key prefix: 2-6 uppercase letters/digits starting with a letter, e.g. DO"), mcp.Pattern("^[A-Z][A-Z0-9]{1,5}$")),
 		),
 		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			args := getArgs(req)
-			body := map[string]any{}
-			if raw, ok := args["settings_json"].(string); ok && raw != "" {
-				if err := json.Unmarshal([]byte(raw), &body); err != nil {
-					return nil, fmt.Errorf("update_settings: invalid settings_json: %w", err)
-				}
-				if body == nil {
-					return nil, fmt.Errorf("update_settings: settings_json must be a JSON object")
-				}
-			}
-
-			fields := []string{
-				"obsidian_vault", "obsidian_inbox", "ai_webhook_url",
-				"otel_frontend_endpoint", "otel_frontend_service",
-				"reminder_enabled", "reminder_minutes_before", "reminder_allday_time",
-				"reminder_timezone", "task_key_prefix",
-			}
-			for _, field := range fields {
-				if value, ok := args[field]; ok && value != nil {
-					body[field] = value
-				}
-			}
-			if len(body) == 0 {
-				return nil, fmt.Errorf("update_settings: at least one setting is required")
+			body, err := buildSettingsBody(getArgs(req))
+			if err != nil {
+				return nil, fmt.Errorf("update_settings: %w", err)
 			}
 
 			data, err := c.Patch("/api/settings", body)
@@ -74,4 +55,48 @@ func RegisterSettingsTools(s *server.MCPServer, c *client.Client) {
 			return mcp.NewToolResultText(prettyJSON(data)), nil
 		},
 	)
+}
+
+var taskKeyPrefixPattern = regexp.MustCompile(`^[A-Z][A-Z0-9]{1,5}$`)
+
+func buildSettingsBody(args map[string]any) (map[string]any, error) {
+	body := map[string]any{}
+	if raw, ok := args["settings_json"].(string); ok && raw != "" {
+		if err := json.Unmarshal([]byte(raw), &body); err != nil {
+			return nil, fmt.Errorf("invalid settings_json: %w", err)
+		}
+		if body == nil {
+			return nil, fmt.Errorf("settings_json must be a JSON object")
+		}
+	}
+
+	// Typed parameters intentionally override duplicate settings_json keys.
+	fields := []string{
+		"obsidian_vault", "obsidian_inbox", "ai_webhook_url",
+		"otel_frontend_endpoint", "otel_frontend_service",
+		"reminder_enabled", "reminder_minutes_before", "reminder_allday_time",
+		"reminder_timezone", "task_key_prefix",
+	}
+	for _, field := range fields {
+		if value, ok := args[field]; ok && value != nil {
+			body[field] = value
+		}
+	}
+	if len(body) == 0 {
+		return nil, fmt.Errorf("at least one setting is required")
+	}
+
+	if value, ok := body["task_key_prefix"]; ok {
+		prefix, ok := value.(string)
+		if !ok {
+			return nil, fmt.Errorf("task_key_prefix must be a string")
+		}
+		prefix = strings.ToUpper(strings.TrimSpace(prefix))
+		if !taskKeyPrefixPattern.MatchString(prefix) {
+			return nil, fmt.Errorf("task_key_prefix must be 2-6 letters/digits starting with a letter")
+		}
+		body["task_key_prefix"] = prefix
+	}
+
+	return body, nil
 }

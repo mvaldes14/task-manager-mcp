@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -34,6 +35,12 @@ func RegisterTaskTools(s *server.MCPServer, c *client.Client) {
 		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			q := url.Values{}
 			args := getArgs(req)
+			if err := validateCSVEnum(args, "status", "todo", "doing", "blocked", "done"); err != nil {
+				return nil, fmt.Errorf("list_tasks: %w", err)
+			}
+			if err := validateCSVEnum(args, "priority", "low", "medium", "high"); err != nil {
+				return nil, fmt.Errorf("list_tasks: %w", err)
+			}
 			addStringQuery(q, args, "project_id", "status", "priority", "tag", "assigned_to", "due_after", "due_before", "search")
 			if v, ok := args["has_due_date"].(bool); ok {
 				q.Set("has_due_date", strconv.FormatBool(v))
@@ -317,4 +324,22 @@ func addNumberQuery(q url.Values, args map[string]any, keys ...string) {
 			q.Set(k, strconv.Itoa(int(v)))
 		}
 	}
+}
+
+func validateCSVEnum(args map[string]any, key string, allowed ...string) error {
+	raw, ok := args[key].(string)
+	if !ok || strings.TrimSpace(raw) == "" {
+		return nil
+	}
+	valid := make(map[string]struct{}, len(allowed))
+	for _, value := range allowed {
+		valid[value] = struct{}{}
+	}
+	for _, value := range strings.Split(raw, ",") {
+		value = strings.TrimSpace(value)
+		if _, ok := valid[value]; !ok {
+			return fmt.Errorf("invalid %s %q; allowed values: %s", key, value, strings.Join(allowed, ", "))
+		}
+	}
+	return nil
 }
