@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -19,8 +20,8 @@ func RegisterTaskTools(s *server.MCPServer, c *client.Client) {
 		mcp.NewTool("list_tasks",
 			mcp.WithDescription("List tasks, optionally filtered. Task search matches title/description and task keys like DO-123 or 123."),
 			mcp.WithString("project_id", mcp.Description("Filter by project ID; includes subprojects")),
-			mcp.WithString("status", mcp.Description("Comma-separated statuses; matches any"), mcp.Enum("todo", "doing", "blocked", "done")),
-			mcp.WithString("priority", mcp.Description("Comma-separated priorities; matches any"), mcp.Enum("low", "medium", "high")),
+			mcp.WithString("status", mcp.Description("Comma-separated statuses (todo, doing, blocked, done); matches any")),
+			mcp.WithString("priority", mcp.Description("Comma-separated priorities (low, medium, high); matches any")),
 			mcp.WithString("tag", mcp.Description("Comma-separated tags; task must have all tags")),
 			mcp.WithString("assigned_to", mcp.Description("User id, me, or none")),
 			mcp.WithString("due_after", mcp.Description("Inclusive lower due date bound, YYYY-MM-DD")),
@@ -34,6 +35,12 @@ func RegisterTaskTools(s *server.MCPServer, c *client.Client) {
 		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			q := url.Values{}
 			args := getArgs(req)
+			if err := validateCSVEnum(args, "status", "todo", "doing", "blocked", "done"); err != nil {
+				return nil, fmt.Errorf("list_tasks: %w", err)
+			}
+			if err := validateCSVEnum(args, "priority", "low", "medium", "high"); err != nil {
+				return nil, fmt.Errorf("list_tasks: %w", err)
+			}
 			addStringQuery(q, args, "project_id", "status", "priority", "tag", "assigned_to", "due_after", "due_before", "search")
 			if v, ok := args["has_due_date"].(bool); ok {
 				q.Set("has_due_date", strconv.FormatBool(v))
@@ -54,7 +61,7 @@ func RegisterTaskTools(s *server.MCPServer, c *client.Client) {
 
 	s.AddTool(
 		mcp.NewTool("search_tasks",
-			mcp.WithDescription("Type-ahead search for open tasks, max 8 results"),
+			mcp.WithDescription("Type-ahead search for open tasks, max 8 results. Results include UUID and permanent numeric seq for formatting task keys."),
 			mcp.WithString("q", mcp.Description("Search text, at least 2 chars"), mcp.Required()),
 			mcp.WithString("exclude", mcp.Description("Task ID to exclude")),
 			mcp.WithReadOnlyHintAnnotation(true),
@@ -225,7 +232,7 @@ func RegisterTaskTools(s *server.MCPServer, c *client.Client) {
 
 	s.AddTool(
 		mcp.NewTool("bulk_update_tasks",
-			mcp.WithDescription("Apply project_id and/or status updates to up to 200 tasks"),
+			mcp.WithDescription("Apply project_id and/or status updates to up to 200 tasks. Bulk completion does not create recurrence clones."),
 			mcp.WithArray("ids", mcp.Description("Task ids/keys to update, 1-200"), mcp.Required()),
 			mcp.WithString("project_id", mcp.Description("Project ID to move tasks to")),
 			mcp.WithString("status", mcp.Description("Status to set"), mcp.Enum("todo", "doing", "blocked", "done")),
@@ -317,4 +324,22 @@ func addNumberQuery(q url.Values, args map[string]any, keys ...string) {
 			q.Set(k, strconv.Itoa(int(v)))
 		}
 	}
+}
+
+func validateCSVEnum(args map[string]any, key string, allowed ...string) error {
+	raw, ok := args[key].(string)
+	if !ok || strings.TrimSpace(raw) == "" {
+		return nil
+	}
+	valid := make(map[string]struct{}, len(allowed))
+	for _, value := range allowed {
+		valid[value] = struct{}{}
+	}
+	for _, value := range strings.Split(raw, ",") {
+		value = strings.TrimSpace(value)
+		if _, ok := valid[value]; !ok {
+			return fmt.Errorf("invalid %s %q; allowed values: %s", key, value, strings.Join(allowed, ", "))
+		}
+	}
+	return nil
 }

@@ -1,123 +1,154 @@
 # task-manager-mcp
 
-MCP server for [doit](https://github.com/mvaldes14/task-manager) — exposes tasks, projects, subtasks, and NLP parsing as MCP tools so any MCP-compatible client (Claude Code, Claude Desktop, etc.) can interact with your self-hosted doit instance.
+MCP server for [doit](https://github.com/mvaldes14/task-manager). Exposes task-manager API operations through MCP streamable HTTP.
 
 ## Requirements
 
 - Go 1.22+
-- A running [doit](https://github.com/mvaldes14/task-manager) instance
-- `DOIT_API_KEY` set in your environment
+- Running doit instance
+- `DOIT_API_KEY`
 
-## Build
+## Build and run
 
 ```bash
 go mod tidy
 go build -o task-manager-mcp .
+DOIT_BASE_URL=http://localhost:5001 \
+DOIT_API_KEY=<key> \
+./task-manager-mcp
 ```
+
+Endpoint: `POST http://localhost:8080/mcp`
 
 ## Configuration
 
-| Env var | Default | Description |
+| Variable | Default | Purpose |
 |---|---|---|
-| `DOIT_BASE_URL` | _(required)_ | Base URL of your doit instance (e.g. `http://localhost:5001`) |
-| `DOIT_API_KEY` | _(required)_ | Bearer token (`TD_API_KEY` from doit's `.env`) |
-| `MCP_ADDR` | `:8080` | Address the HTTP server binds to |
+| `DOIT_BASE_URL` | required | doit base URL |
+| `DOIT_API_KEY` | required | Bearer token (`TD_API_KEY` in doit) |
+| `MCP_ADDR` | `:8080` | MCP HTTP listen address |
 
-## Transport
-
-The server uses the [MCP streamable HTTP transport](https://modelcontextprotocol.io/docs/concepts/transports) — plain HTTP POST, no SSE keepalive. The endpoint is `POST /mcp`.
-
-```bash
-DOIT_BASE_URL=http://localhost:5001 DOIT_API_KEY=<key> ./task-manager-mcp
-# listening on :8080/mcp
-```
-
-## Claude Code setup
-
-Add to `~/.claude/settings.json` (or your project-level `.mcp.json`):
+## MCP client configuration
 
 ```json
 {
   "mcpServers": {
     "doit": {
       "type": "http",
-      "url": "http://localhost:8080/mcp",
-      "env": {
-        "DOIT_BASE_URL": "http://localhost:5001",
-        "DOIT_API_KEY": "your-key"
-      }
+      "url": "http://localhost:8080/mcp"
     }
   }
 }
 ```
 
-Then restart Claude Code — the tools appear automatically.
+Server process must receive `DOIT_BASE_URL` and `DOIT_API_KEY`.
 
 ## Tools
 
 ### Tasks
 
-| Tool | Description |
+| Tool | Purpose |
 |---|---|
-| `list_tasks` | List tasks; optional filters: `project_id`, `status` (todo\|doing\|done), `search` |
-| `get_task` | Get a single task by `id` |
-| `create_task` | Create a task (`title` required; optional: `description`, `status`, `priority` (low\|medium\|high), `due_date`, `due_time`, `project_id`, `tags`, `recurrence`, `recurrence_end`, `assigned_to`, `links`) |
-| `update_task` | Update any fields on a task by `id` |
-| `delete_task` | Delete a task by `id` |
-| `get_today_tasks` | Tasks due today |
-| `get_overdue_tasks` | Past-due tasks |
-| `get_upcoming_tasks` | Tasks due within the next 7 days |
+| `list_tasks` | List/filter tasks by project, status, priority, tags, assignee, due-date range, due-date presence, search, limit, and offset |
+| `search_tasks` | Type-ahead search for open tasks; results include UUID and permanent numeric `seq` |
+| `get_task` | Get task by UUID, formatted key such as `DO-142`, or bare seq such as `142` |
+| `create_task` | Create task; supports NLP or verbatim `skip_nlp` mode |
+| `update_task` | Update task by UUID, key, or seq |
+| `delete_task` | Soft-delete task; optional `purge=true` permanently deletes it |
+| `restore_task` | Restore soft-deleted task |
+| `reorder_tasks` | Update task positions/statuses for drag-and-drop |
+| `bulk_update_tasks` | Move or change status for up to 200 tasks |
+| `get_today_tasks` | List incomplete tasks due today |
+| `get_overdue_tasks` | List incomplete overdue tasks |
+| `get_upcoming_tasks` | List tasks due in next seven days |
+
+Task responses include permanent numeric `seq`. Format human-readable keys as `<task_key_prefix>-<seq>`; retrieve prefix with `get_settings`.
 
 ### Projects
 
-| Tool | Description |
+| Tool | Purpose |
 |---|---|
-| `list_projects` | List all projects (includes task counts) |
-| `create_project` | Create a project (`name` required; optional: `color`, `icon`) |
-| `update_project` | Update a project by `id` |
-| `delete_project` | Delete a project by `id` (tasks moved to inbox) |
+| `list_projects` | List projects and subprojects |
+| `create_project` | Create project or one-level subproject, with description/deadline support |
+| `update_project` | Update metadata, parent, deadline, sharing, or archive state |
+| `delete_project` | Delete project; tasks move to inbox and children promote to root |
+| `reorder_projects` | Reorder flat depth-first project IDs within sibling groups |
 
 ### Subtasks
 
-| Tool | Description |
+| Tool | Purpose |
 |---|---|
-| `add_subtask` | Add a subtask (`task_id` + `title` required; optional: `due_date`, `due_time`, `labels`, `linked_task_id`) |
-| `update_subtask` | Update a subtask (`task_id`, `subtask_id` required; optional: `title`, `completed`, `due_date`, `due_time`, `labels`) |
-| `delete_subtask` | Delete a subtask (`task_id`, `subtask_id` required) |
+| `add_subtask` | Add verbatim-title subtask or link existing task |
+| `update_subtask` | Update title/completion state |
+| `delete_subtask` | Delete subtask |
 
-### Context & discovery
+Parent task references accept UUID, formatted key, or bare seq.
 
-| Tool | Description |
+### Context and discovery
+
+| Tool | Purpose |
 |---|---|
-| `get_agent_context` | One-shot snapshot: today, overdue, next 7 days, and projects in a single call |
-| `get_all_tags` | All distinct tags in use across tasks |
-| `get_dashboard_stats` | Productivity stats over a rolling window (optional `days`, default 30) |
+| `get_agent_context` | Fetch today, overdue, upcoming, projects, and settings in one call |
+| `get_all_tags` | List distinct task tags |
+| `get_dashboard_stats` | Fetch counts, trends, project progress, at-risk deadlines, tags, and streaks |
+| `parse_nlp` | Parse natural-language task text |
 
-### NLP
+### Settings
 
-| Tool | Description |
+| Tool | Purpose |
 |---|---|
-| `parse_nlp` | Parse natural language (`text` required) → returns structured task fields |
+| `get_settings` | Read settings, including `task_key_prefix` |
+| `update_settings` | Merge typed common settings or arbitrary `settings_json`; supports validated task-key prefix |
 
-### AI Results
+`task_key_prefix` must be 2-6 uppercase letters/digits and start with a letter.
 
-| Tool | Description |
+### AI results
+
+| Tool | Purpose |
 |---|---|
-| `get_task_ai_result` | Get the stored AI-generated result for a task (`task_id` required) |
-| `store_task_ai_result` | Store (upsert) an AI result for a task (`task_id` + `content` required; optional: `model`) |
+| `get_task_ai_result` | Read stored AI result for task |
+| `store_task_ai_result` | Upsert AI result and model metadata |
+
+### Users and authentication
+
+| Tool | Purpose |
+|---|---|
+| `get_auth_status` | Read authentication/current-user state |
+| `auth_login` | Log in with username/password |
+| `auth_logout` | Destroy session |
+| `list_users` | List users |
+| `create_user` | Create user; admin only |
+| `get_current_user` | Read current user |
+| `update_current_user` | Update display name or password |
+| `upload_current_user_avatar` | Upload base64-encoded avatar image |
+| `get_user_avatar` | Fetch user avatar |
+
+API-key deployments normally use bearer auth and do not need login tools.
+
+### Calendars and telemetry
+
+| Tool | Purpose |
+|---|---|
+| `get_gcal_status` | Read Google Calendar integration state |
+| `sync_gcal` | Push open dated tasks to Google Calendar |
+| `list_ics_calendars` | List ICS calendars |
+| `create_ics_calendar` | Add ICS calendar by URL or uploaded file |
+| `delete_ics_calendar` | Delete ICS calendar |
+| `get_ics_events` | List calendar events by month |
+| `send_otlp_traces` | Forward JSON or protobuf OTLP traces through doit |
 
 ## Project structure
 
-```
+```text
 .
 ├── main.go
 └── internal/
-    ├── client/
-    │   └── client.go       # HTTP client with Get/Post/Patch/Delete/Put
+    ├── client/client.go
     └── tools/
         ├── tasks.go
         ├── projects.go
         ├── subtasks.go
-        ├── nlp.go
-        └── ai.go
+        ├── settings.go
+        ├── context.go
+        └── ...
 ```
